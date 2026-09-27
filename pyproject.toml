@@ -1,0 +1,23 @@
+[project]
+name = "aegis-provenance"
+version = "0.1.0"
+description = "Offline cryptographic attribution and decryption provenance reference implementation"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+dependencies = ["cryptography>=42,<45"]
+
+[project.optional-dependencies]
+pq = ["liboqs-python>=0.12"]
+image = ["Pillow>=10"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+aegis = "aegis.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
