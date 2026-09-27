@@ -1,15 +1,14 @@
 [project]
 name = "aegis-provenance"
-version = "0.1.0"
-description = "Offline cryptographic attribution and decryption provenance reference implementation"
+version = "0.2.0"
+description = "Offline cryptographic attribution and decryption provenance service"
 requires-python = ">=3.11"
 license = {text = "MIT"}
-dependencies = ["cryptography>=42,<45"]
+dependencies = ["cryptography>=42,<45", "fastapi>=0.115,<1", "uvicorn[standard]>=0.30,<1", "Pillow>=10,<12"]
 
 [project.optional-dependencies]
 pq = ["liboqs-python>=0.12"]
-image = ["Pillow>=10"]
-dev = ["pytest>=8", "ruff>=0.6"]
+dev = ["pytest>=8", "ruff>=0.6", "httpx>=0.27"]
 
 [project.scripts]
 aegis = "aegis.cli:main"

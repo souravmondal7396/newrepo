@@ -1,0 +1,20 @@
+services:
+  aegis:
+    build: .
+    image: aegis-provenance:local
+    ports:
+      - "8080:8080"
+    environment:
+      AEGIS_DATA_DIR: /var/lib/aegis
+      AEGIS_ALLOW_DEV_CRYPTO: "1"
+    volumes:
+      - aegis-data:/var/lib/aegis
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp
+volumes:
+  aegis-data:

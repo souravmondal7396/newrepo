@@ -1,0 +1,12 @@
+services:
+  aegis:
+    build: ../..
+    environment:
+      AEGIS_DATA_DIR: /var/lib/aegis
+      AEGIS_ALLOW_DEV_CRYPTO: "0"
+    volumes:
+      - aegis-data:/var/lib/aegis
+  # Fabric peer/orderer configuration is intentionally supplied by the
+  # organization network bundle; do not run a single-node ledger as production consensus.
+volumes:
+  aegis-data:
