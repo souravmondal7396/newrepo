@@ -1,19 +1,24 @@
 from __future__ import annotations
 import argparse, json, os
 from pathlib import Path
+from .crypto import EnvelopeCrypto
 from .ledger import AppendOnlyLedger, create_event
-from .model import b64, digest, unb64
+from .model import canonical, digest, unb64
 from .pq import PQIdentity
+from .watermark import ReferenceWatermark
 
 def demo(workdir: Path):
-    workdir.mkdir(parents=True, exist_ok=True); identity=PQIdentity.generate(); document=b"SIH confidential document demo"
-    event=create_event(document, document, "recipient-demo", os.urandom(16).hex(), identity)
-    ledger=AppendOnlyLedger(workdir/"ledger.jsonl"); ledger.append(event)
-    assert ledger.verify_chain(); record=ledger.find(event.watermark_id)
-    assert record and identity.verify(event.bytes_to_sign(), unb64(event.signature))
-    (workdir/"event.json").write_text(json.dumps(record, indent=2)); print(json.dumps({"status":"verified","watermark_id":event.watermark_id,"ledger":str(ledger.path)}, indent=2))
+    workdir.mkdir(parents=True,exist_ok=True); source=workdir/"original.png"; encrypted=workdir/"document.bin"; output=workdir/"released.png"
+    from PIL import Image
+    if not source.exists(): Image.new("RGB",(256,256),(80,120,160)).save(source)
+    plaintext=source.read_bytes(); crypto=EnvelopeCrypto(); key=crypto.generate_key(); encrypted.write_bytes(crypto.encrypt(key,plaintext,digest(plaintext).encode()))
+    recovered=crypto.decrypt(key,encrypted.read_bytes(),digest(plaintext).encode()); assert recovered==plaintext
+    identity=PQIdentity.generate(); ledger=AppendOnlyLedger(workdir/"ledger.jsonl"); watermark_id=os.urandom(16).hex()
+    event=create_event(recovered,recovered,"recipient-demo",watermark_id,identity,ledger.last_hash()); ReferenceWatermark().embed(source,watermark_id.encode(),output); ledger.append(event)
+    extracted=ReferenceWatermark().extract(output).decode(); record=ledger.find(extracted)
+    assert record and ledger.verify_chain() and digest(extracted.encode())==record["watermark_digest"]
+    (workdir/"event.json").write_text(json.dumps(record,indent=2)); print(json.dumps({"status":"verified","watermark_id":extracted,"output":str(output)},indent=2))
 
 def main():
-    p=argparse.ArgumentParser(); sub=p.add_subparsers(dest="command", required=True); d=sub.add_parser("demo"); d.add_argument("--workdir", type=Path, default=Path("demo")); args=p.parse_args()
-    if args.command == "demo": demo(args.workdir)
-if __name__ == "__main__": main()
+    parser=argparse.ArgumentParser(); sub=parser.add_subparsers(dest="command",required=True); command=sub.add_parser("demo"); command.add_argument("--workdir",type=Path,default=Path("demo")); args=parser.parse_args(); demo(args.workdir)
+if __name__=="__main__": main()
